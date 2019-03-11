@@ -11,19 +11,14 @@
 class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Test_Case {
 
 	/**
-	 * Endpoints.
-	 *
-	 * @var string
-	 */
-	protected $endpoint = '/wc-blocks/v1';
-
-	/**
 	 * Setup test products data. Called before every test.
 	 *
 	 * @since 3.6.0
 	 */
 	public function setUp() {
 		parent::setUp();
+
+		$this->endpoint = new WC_REST_Blocks_Product_Attributes_Controller();
 
 		$this->user = $this->factory->user->create(
 			array(
@@ -49,7 +44,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 	 */
 	public function test_get_terms() {
 		wp_set_current_user( $this->user );
-		$request = new WP_REST_Request( 'GET', $this->endpoint . '/products/attributes/' . $this->attr_color['attribute_id'] . '/terms' );
+		$request = new WP_REST_Request( 'GET', '/wc-blocks/v1/products/attributes/' . $this->attr_color['attribute_id'] . '/terms' );
 
 		$response       = $this->server->dispatch( $request );
 		$response_terms = $response->get_data();
@@ -81,7 +76,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 	 */
 	public function test_get_invalid_attribute_terms() {
 		wp_set_current_user( $this->user );
-		$request = new WP_REST_Request( 'GET', $this->endpoint . '/products/attributes/99999/terms' );
+		$request = new WP_REST_Request( 'GET', '/wc-blocks/v1/products/attributes/99999/terms' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 404, $response->get_status() );
@@ -93,7 +88,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 	 * @since 3.6.0
 	 */
 	public function test_get_unauthed_attribute_terms() {
-		$request = new WP_REST_Request( 'GET', $this->endpoint . '/products/attributes/' . $this->attr_size['attribute_id'] . '/terms' );
+		$request = new WP_REST_Request( 'GET', '/wc-blocks/v1/products/attributes/' . $this->attr_size['attribute_id'] . '/terms' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 401, $response->get_status() );
@@ -106,7 +101,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 	 */
 	public function test_get_attribute_terms_contributor() {
 		wp_set_current_user( $this->contributor );
-		$request = new WP_REST_Request( 'GET', $this->endpoint . '/products/attributes/' . $this->attr_size['attribute_id'] . '/terms' );
+		$request = new WP_REST_Request( 'GET', '/wc-blocks/v1/products/attributes/' . $this->attr_size['attribute_id'] . '/terms' );
 
 		$response       = $this->server->dispatch( $request );
 		$response_terms = $response->get_data();
