@@ -54,7 +54,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 		$response       = $this->server->dispatch( $request );
 		$response_terms = $response->get_data();
 		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( 3, count( $response_terms ) );
+		$this->assertEquals( 3, count( $response_terms ), print_r( $response_terms, true ) );
 		$term = $response_terms[0];
 		$this->assertArrayHasKey( 'attribute', $term );
 		$attribute = $term['attribute'];
