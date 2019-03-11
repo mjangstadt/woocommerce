@@ -35,6 +35,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 		// Create 2 product attributes with terms.
 		$this->attr_color = WC_Helper_Product::create_attribute( 'color', array( 'red', 'yellow', 'blue' ) );
 		$this->attr_size  = WC_Helper_Product::create_attribute( 'size', array( 'small', 'medium', 'large', 'xlarge' ) );
+		delete_transient( 'wc_attribute_taxonomies' );
 	}
 
 	/**
@@ -54,6 +55,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 			count( $response_terms ),
 			print_r(
 				array(
+					'endpoint'     => '/wc-blocks/v1/products/attributes/' . $this->attr_color['attribute_id'] . '/terms',
 					'response'     => $response_terms,
 					'attribute_id' => $this->attr_color['attribute_id'],
 					'attribute'    => $this->attr_color,

@@ -142,56 +142,74 @@ class WC_Helper_Product {
 	 *
 	 * @since 2.3
 	 *
-	 * @param string        $attribute_name Name of attribute to create.
+	 * @param string        $raw_name Name of attribute to create.
 	 * @param array(string) $terms          Terms to create for the attribute.
 	 * @return array
 	 */
-	public static function create_attribute( $attribute_name = 'size', $terms = array( 'small' ) ) {
-		global $wpdb;
+	public static function create_attribute( $raw_name = 'size', $terms = array( 'small' ) ) {
+		global $wpdb, $wc_product_attributes;
 
-		$attribute = array(
-			'attribute_label'   => $attribute_name,
-			'attribute_name'    => $attribute_name,
-			'attribute_type'    => 'select',
-			'attribute_orderby' => 'menu_order',
-			'attribute_public'  => 0,
-		);
-		$wpdb->insert( $wpdb->prefix . 'woocommerce_attribute_taxonomies', $attribute );
+		// These are exported as labels, so convert the label to a name if possible first.
+		$attribute_labels = wp_list_pluck( wc_get_attribute_taxonomies(), 'attribute_label', 'attribute_name' );
+		$attribute_name   = array_search( $raw_name, $attribute_labels, true );
 
-		$return = array(
-			'attribute_name'     => $attribute_name,
-			'attribute_taxonomy' => 'pa_' . $attribute_name,
-			'attribute_id'       => $wpdb->insert_id,
-			'term_ids'           => array(),
-		);
+		if ( ! $attribute_name ) {
+			$attribute_name = wc_sanitize_taxonomy_name( $raw_name );
+		}
 
-		// Register the taxonomy.
-		$name  = wc_attribute_taxonomy_name( $attribute_name );
-		$label = $attribute_name;
+		$attribute_id  = wc_attribute_taxonomy_id_by_name( $attribute_name );
+		$taxonomy_name = wc_attribute_taxonomy_name( $attribute_name );
 
-		delete_transient( 'wc_attribute_taxonomies' );
+		if ( ! $attribute_id ) {
+			$attribute_id = wc_create_attribute(
+				array(
+					'name'         => $attribute_name,
+					'slug'         => $attribute_name,
+					'type'         => 'select',
+					'order_by'     => 'menu_order',
+					'has_archives' => 0,
+				)
+			);
 
-		register_taxonomy( 'pa_' . $attribute_name, array( 'product' ), array(
-			'labels' => array(
-				'name' => $attribute_name,
-			),
-		) );
+			// Register as taxonomy.
+			register_taxonomy(
+				$taxonomy_name,
+				apply_filters( 'woocommerce_taxonomy_objects_' . $taxonomy_name, array( 'product' ) ),
+				apply_filters(
+					'woocommerce_taxonomy_args_' . $taxonomy_name,
+					array(
+						'labels'       => array(
+							'name' => $raw_name,
+						),
+						'hierarchical' => true,
+						'show_ui'      => false,
+						'query_var'    => true,
+						'rewrite'      => false,
+					)
+				)
+			);
 
-		// Set product attributes global.
-		global $wc_product_attributes;
-		$wc_product_attributes = array();
-		foreach ( wc_get_attribute_taxonomies() as $tax ) {
-			$name = wc_attribute_taxonomy_name( $tax->attribute_name );
-			if ( $name ) {
-				$wc_product_attributes[ $name ] = $tax;
+			// Set product attributes global.
+			$wc_product_attributes = array();
+
+			foreach ( wc_get_attribute_taxonomies() as $taxonomy ) {
+				$wc_product_attributes[ wc_attribute_taxonomy_name( $taxonomy->attribute_name ) ] = $taxonomy;
 			}
 		}
 
+		$attribute = wc_get_attribute( $attribute_id );
+		$return    = array(
+			'attribute_name'     => $attribute->name,
+			'attribute_taxonomy' => $taxonomy_name,
+			'attribute_id'       => $attribute_id,
+			'term_ids'           => array(),
+		);
+
 		foreach ( $terms as $term ) {
-			$result = term_exists( $term, 'pa_' . $attribute_name );
+			$result = term_exists( $term, $taxonomy_name );
 
 			if ( ! $result ) {
-				$result = wp_insert_term( $term, 'pa_' . $attribute_name );
+				$result = wp_insert_term( $term, $taxonomy_name );
 				$return['term_ids'][] = $result['term_id'];
 			} else {
 				$return['term_ids'][] = $result['term_id'];
