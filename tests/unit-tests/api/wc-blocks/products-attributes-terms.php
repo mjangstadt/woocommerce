@@ -58,6 +58,7 @@ class WC_Tests_API_Products_Attributes_Terms_Controller extends WC_REST_Unit_Tes
 					'response'     => $response_terms,
 					'attribute_id' => $this->attr_color['attribute_id'],
 					'attribute'    => $this->attr_color,
+					'raw_response' => $response,
 				),
 				true
 			)
